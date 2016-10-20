@@ -3,7 +3,7 @@ import numpy as np
 class cost_model(object):
     '''Includes functions to evaluate the cost curve for a climate model
     '''
-    def __init__(self,tree,g=92.08,a=3.413,join=2000.,maxPrice=2500.,teconst=1.5,tescale=0.0,consat0=30460.):
+    def __init__(self,tree,g=92.08,a=3.413,join=2000.,max_price=2500.,teconst=1.5,tescale=0.0,consat0=30460.):
         '''Initializes a climate parameter model
         
         Parameters
@@ -21,7 +21,7 @@ class cost_model(object):
         join : float
             Price at which the cost curve is extended
         
-        maxPrice : float
+        max_price : float
             Price at which carbon dioxide can be removed from atmosphere in unlimited scale
         
         teconst : float
@@ -47,19 +47,19 @@ class cost_model(object):
         self.g = g
         self.a = a
         self.join = join
-        self.maxPrice = maxPrice
+        self.max_price = max_price
         self.teconst = teconst
         self.tescale = tescale
         self.cbs_level = (self.join / (self.g * self.a))**(1./(self.a-1.))
         self.cbs_deriv = self.cbs_level / (self.join * (self.a-1.))
-        self.cbs_b = self.cbs_deriv * (self.maxPrice - self.join)/self.cbs_level
-        self.cbs_k = self.cbs_level * (self.maxPrice - self.join)**self.cbs_b
+        self.cbs_b = self.cbs_deriv * (self.max_price - self.join)/self.cbs_level
+        self.cbs_k = self.cbs_level * (self.max_price - self.join)**self.cbs_b
         '''
             consperton0 = consat0 / bau_emit_level[0] = 30460 billions / 52 billion metric tons CO2 equivalent emissions
         '''
         self.consperton0 = consat0 / tree.bau_emit_level[0]
         self.cost_gradient = np.zeros([self.tree.x_dim, self.tree.x_dim])
-        print 'Exogenous technological change =', teconst,'Endogenous technological change =', tescale
+        print('Exogenous technological change =', teconst,'Endogenous technological change =', tescale)
 
     def cost_by_state( self, mitigation, average_mitigation, node):
         '''Calculates the mitigation cost by state
@@ -89,7 +89,7 @@ class cost_model(object):
             cbs = self.g * mitigation**self.a * te_term / self.consperton0
         else :
             base_cbs = self.g * self.cbs_level**self.a
-            extension = ((mitigation - self.cbs_level)*self.maxPrice
+            extension = ((mitigation - self.cbs_level)*self.max_price
                          - self.cbs_b * mitigation * (self.cbs_k/mitigation)**(1.0/self.cbs_b)/(self.cbs_b-1.)
                          + self.cbs_b * self.cbs_level * (self.cbs_k/self.cbs_level)**(1.0/self.cbs_b)/(self.cbs_b-1.))
             cbs = (base_cbs + extension) * te_term / self.consperton0
@@ -240,7 +240,7 @@ class cost_model(object):
             dd_cbs = ( self.g * mitigation**self.a * dd_term ) / self.consperton0
         else :
             base_cbs = self.g * self.cbs_level**self.a
-            extension = ((mitigation - self.cbs_level)*self.maxPrice
+            extension = ((mitigation - self.cbs_level)*self.max_price
                          - self.cbs_b * mitigation * (self.cbs_k/mitigation)**(1./self.cbs_b)/(self.cbs_b-1.)
                          + self.cbs_b * self.cbs_level * (self.cbs_k/self.cbs_level)**(1.0/self.cbs_b)/(self.cbs_b-1.))
             dd_cbs = ( (base_cbs + extension) * dd_term ) / self.consperton0
@@ -270,7 +270,7 @@ class cost_model(object):
         if mitigation < self.cbs_level :
             dd_cbs = self.g * self.a * mitigation**(self.a-1.0)* te_term / self.consperton0
         else:
-            dd_cbs =  (self.maxPrice - ( self.cbs_k / mitigation )**(1.0/self.cbs_b)) * te_term / self.consperton0
+            dd_cbs =  (self.max_price - ( self.cbs_k / mitigation )**(1.0/self.cbs_b)) * te_term / self.consperton0
         return dd_cbs
     
     def price_by_state( self, mitigation, average_mitigation, tc_years ):
@@ -297,5 +297,5 @@ class cost_model(object):
             price = self.g * self.a * mitigation**(self.a-1.) * te_term
             return price
         else :
-            price = (self.maxPrice - (self.cbs_k/mitigation)**(1./self.cbs_b)) * te_term
+            price = (self.max_price - (self.cbs_k/mitigation)**(1./self.cbs_b)) * te_term
             return price

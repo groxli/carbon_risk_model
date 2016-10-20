@@ -76,9 +76,9 @@ class tree_model(object):
               SCC decomposition intermediate calculations]
         '''
         self.analysis = analysis
-        print "analysis =", analysis
+        print("analysis =", analysis)
         decision_times[1] = tp1
-        print "time_period_one", tp1
+        print("time_period_one", tp1)
         self.final_states = final_states
         self.nperiods = nperiods
         self.peak_temp_interval = peak_temp_interval
@@ -107,7 +107,7 @@ class tree_model(object):
         self.total_time = self.decision_times[nperiods]
 
         self.utility_nperiods = int(self.total_time / self.sub_interval_length)+1
-        print 'utility_nperiods', self.utility_nperiods
+        print('utility_nperiods', self.utility_nperiods)
 
         for p in range(1, self.nperiods):
             self.decision_nodes.append( 2**p )
@@ -161,6 +161,10 @@ class tree_model(object):
             self.utility_decision_period[self.utility_nperiods-2] = self.utility_decision_period[self.utility_nperiods-3]+1
             self.utility_period_pointer.append( self.utility_period_pointer[self.utility_nperiods-2] + self.utility_period_nodes[self.utility_nperiods-2] )
 
+        #print("DEBUG: self.utility_period_pointer:", self.utility_period_pointer)
+        #print("DEBUG: self.final_states: ",self.final_states)
+        #print("DEBUG: utility_nperiods: ", self.utility_nperiods)
+        #print("DEBUG: self.final_states:", self.final_states)
         self.utility_full_tree = self.utility_period_pointer[self.utility_nperiods-1]+self.final_states
         self.create_probs()
         self.allocate_data_structures()
@@ -175,9 +179,9 @@ class tree_model(object):
         self.bau_emit_level = [ 52.0, 70.0, 81.4]
         self.bau_emissions_setup()
 
-        print "initializing tree", "\n number of periods =", self.nperiods, "\n number of nodes in tree =", x_dim,"\n"
-        print " probability scale paramter =", self.prob_scale
-        print " probabilities of final states \n ", self.probs, "\n"
+        print("initializing tree", "\n number of periods =", self.nperiods, "\n number of nodes in tree =", x_dim,"\n")
+        print(" probability scale paramter =", self.prob_scale)
+        print(" probabilities of final states \n ", self.probs, "\n")
     def bau_of_t(self, time):
         '''     return the bau emissions at any time t   '''
         if time < self.bau_emit_time[1] :
