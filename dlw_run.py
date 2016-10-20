@@ -8,47 +8,50 @@
      dlw_damage_class:        runs a monte carlo simulation to estimate damages and form the basis of a damage function
      dlw_cost_class:          approximates the McKinsey cost curve and incorporates technological change to create a cost function
      dlw_optimize_class:      controls the optimization, for example initializes mitigation, sets constraints, writes output
-     dlw_utility:             evaluates the Epstein-Zin utility function, marginal utility, and analytic derivatives wrt mitigation
+     dlw_utility:             evaluates thPrint_Optione Epstein-Zin utility function, marginal utility, and analytic derivatives wrt mitigation
 '''
-print 'running dlw_run from C:/Users/blitt_000/Dropbox/EZ Climate calibration paper/dlw code/dlw_run.py'
+print('running dlw_run from C:/Users/blitt_000/Dropbox/EZ Climate calibration paper/dlw code/dlw_run.py')
 import dlw_utility as fm
 import math
 import scipy
 import sys
+import pandas as pd # For loading in difference sceanrio configurations.
 '''
   when running in batch mode parameters are passed in sys.argv[i],
     where i = 1, 2, 3...
     this section of code sets up the argment list
     code using batch parameters is highlighted by a comment
 '''
-print 'These arguments set in batch mode'
-#print 'growth rate = ', sys.argv[1]
-print 'period_1_years =', sys.argv[1]
-#print 'analysis =', sys.argv[2]
-#print 'force_simul =', sys.argv[3]
+print('These arguments set in batch mode')
+#print('growth rate = ', sys.argv[1]
+# Original 1st parm: print('period_1_years =', sys.argv[1])
+#print('analysis =', sys.argv[2]
+#print('force_simul =', sys.argv[3]
+scenario_df = pd.read_excel('scenarios.xls')
+tp1 = scenario_df.parm_value[(scenario_df.parm_name == 'tp1')].values[0]
 '''
   initialize the tree class
 '''
 from dlw_tree_class import tree_model
-my_tree = tree_model(tp1=int(sys.argv[1]))
+#Orig: my_tree = tree_model(tp1=int(sys.argv[1]))
+my_tree = tree_model(tp1=tp1)
 #my_tree = tree_model()
-print 'tree nodes', my_tree.decision_period_pointer
-print 'horizon times', my_tree.decision_times
-print 'utility periods', my_tree.utility_nperiods
-print 'utility full_tree', my_tree.utility_full_tree
-print 'u_times', my_tree.utility_times
-print 'decision_period?', my_tree.decision_period
-print 'branch_period?', my_tree.information_period
-print 'u_first_node', my_tree.utility_period_pointer
-print 'u_nodes', my_tree.utility_period_nodes
-print 'u_tree_period', my_tree.utility_decision_period
+print('tree nodes', my_tree.decision_period_pointer)
+print('horizon times', my_tree.decision_times)
+print('utility periods', my_tree.utility_nperiods)
+print('utility full_tree', my_tree.utility_full_tree)
+print('u_times', my_tree.utility_times)
+print('decision_period?', my_tree.decision_period)
+print('branch_period?', my_tree.information_period)
+print('u_first_node', my_tree.utility_period_pointer)
+print('u_nodes', my_tree.utility_period_nodes)
+print('u_tree_period', my_tree.utility_decision_period)
 
 '''
   initialize the damage class
 '''
 from dlw_damage_class import damage_model
 my_damage_model = damage_model(my_tree=my_tree)
-#my_damage_model = damage_model(my_tree=my_tree)
 my_damage_model.damage_function_initialization()
 
 '''
@@ -57,7 +60,7 @@ my_damage_model.damage_function_initialization()
 from dlw_cost_class import cost_model
 my_cost_model = cost_model(tree=my_tree)
 
-print 'economic growth', my_tree.growth, 'risk aversion', my_tree.ra, 'elasticity of intertemporal substitution', my_tree.eis
+print('economic growth', my_tree.growth, 'risk aversion', my_tree.ra, 'elasticity of intertemporal substitution', my_tree.eis)
 
 '''
   initialize the tree and damage function interpolation coefficients
@@ -69,17 +72,17 @@ my_damage_model.dfc = my_damage_model.damage_function_interpolation()
   get the initial parameters and output the parameters and initial fit
 '''
 from dlw_optimize_class import optimize_plan
-#my_optimization = optimize_plan(my_tree=my_tree,randomize=float(sys.argv[2]),alt_input=int(sys.argv[3]))
+#     = optimize_plan(my_tree=my_tree,randomize=float(sys.argv[2]),alt_input=int(sys.argv[3]))
 my_optimization = optimize_plan(my_tree=my_tree)
 if my_tree.nperiods <= 5 :
   my_optimization.get_initial_guess()
 else :
   my_optimization.get_initial_guess6()    
 
-print "initial guess", my_optimization.guess
+print("initial guess", my_optimization.guess)
 
 base = fm.utility_function( my_optimization.guess, my_tree, my_damage_model, my_cost_model )
-print 'initial parameter fit', base
+print('initial parameter fit', base)
 
 '''
   numerical derivative  check of the gradient
@@ -92,9 +95,9 @@ for p in range(0,my_tree.x_dim):
   base_plus_p = fm.utility_function( guess, my_tree, my_damage_model, my_cost_model )
   num_deriv = (base_plus_p-base)/delta
   if abs((base_grad[p]-num_deriv)/num_deriv) > .05 :
-    print 'CHECK GRADIENT: ','p = ', p, 'derivative calculation = ', base_grad[p], 'numerical derivative = ', num_deriv
+    print('CHECK GRADIENT: ','p = ', p, 'derivative calculation = ', base_grad[p], 'numerical derivative = ', num_deriv)
   if my_optimization.derivative_check == 1 :
-    print 'p', p, 'derivative =', base_grad[p], 'numerical derivative', num_deriv
+    print('p', p, 'derivative =', base_grad[p], 'numerical derivative', num_deriv)
   guess[p] -= delta
   
 from scipy.optimize import fmin_l_bfgs_b
@@ -109,18 +112,18 @@ if my_tree.analysis == 1 or my_tree.analysis == 2 :
   my_optimization.set_constraints(constrain=0)
   res = fmin_l_bfgs_b( fm.utility_function,guess,fprime=fm.analytic_utility_gradient,factr=1.,pgtol=1.0e-5,bounds=(my_optimization.xbounds),maxfun=600,args=([my_tree, my_damage_model, my_cost_model]))
   bestfit = res[1]
-  print 'best fit', bestfit
+  print('best fit', bestfit)
   bestparams = res[0]
-  print 'best parameters', bestparams
+  print('best parameters', bestparams)
   retparam = res[2]
-  print 'gradient', retparam['grad']
-  print 'function calls', retparam['funcalls']
+  print('gradient', retparam['grad'])
+  print('function calls', retparam['funcalls'])
 else :
   bestfit = base
   bestparams = guess
   
 '''
-   if analysis = 1, then the only step is optimization: now print output to the terminal
+   if analysis = 1, then the only step is optimization: now print(output to the terminal
 '''
 if my_tree.analysis == 1:
   my_optimization.create_output(bestparams, bestfit, my_damage_model, my_cost_model, my_tree)
@@ -216,7 +219,7 @@ if my_tree.analysis >= 3:
        when my_tree.analysis = 4 the current mitigation is indeed from the unconstrained optimal plan
     '''
     if my_tree.analysis == 3 :
-      print 'base_x', base_x, 'delta_x', delta_x
+      print('base_x', base_x, 'delta_x', delta_x)
       newparams[0] += delta_x
       my_tree.first_period_epsilon = lump_sum
       my_optimization.set_constraints(constrain=1, node_0 = newparams[0], node_1 = newparams[1], node_2 = newparams[2])
@@ -242,7 +245,7 @@ if my_tree.analysis >= 3:
     '''
     delta_util_x = newfit - basefit
   
-    print 'delta_util_x', delta_util_x
+    print('delta_util_x', delta_util_x)
 
     if my_tree.analysis == 3:
       '''
@@ -257,16 +260,16 @@ if my_tree.analysis >= 3:
       my_tree.first_period_epsilon = lump_sum
       my_tree.first_period_epsilon += delta_con
       baseparams[0]= base_x
-      print 'epsilon', my_tree.first_period_epsilon
+      print('epsilon', my_tree.first_period_epsilon)
       util_given_delta_con = fm.utility_function( baseparams, my_tree, my_damage_model, my_cost_model )
       delta_util_c = util_given_delta_con - basefit
       my_tree.first_period_epsilon = 0.0
-      print 'basefit', basefit, 'newfit', newfit, 'util_given_delta', util_given_delta_con
-      print 'delta_con', delta_con
-      print 'delta_util_c', delta_util_c
+      print('basefit', basefit, 'newfit', newfit, 'util_given_delta', util_given_delta_con)
+      print('delta_con', delta_con)
+      print('delta_util_c', delta_util_c)
     else:
       delta_x = newparams[0]
-      print 'delta_x', delta_x
+      print('delta_x', delta_x)
       from scipy.optimize import brentq
       '''
        my_optimization.constraint_cost is the utility cost of constraining first period mitigation to zero
@@ -281,27 +284,27 @@ if my_tree.analysis >= 3:
        where delta_utility = util(constrained plan, consumption[today] + delta_con)-util(unconstrained plan, consumption[today])
       '''
       delta_con = brentq( my_optimization.find_bec, -.1, .99, args=( my_tree, my_damage_model, my_optimization, my_cost_model))
-      print 'delta consumption to match unconstrained optimal plan', delta_con
+      print('delta consumption to match unconstrained optimal plan', delta_con)
     if my_tree.analysis == 3:
-      print 'Marginal cost of emissions reduction at x = ', base_x, 'is', marginal_cost
+      print('Marginal cost of emissions reduction at x = ', base_x, 'is', marginal_cost)
       '''
         my_cost_model.consperton0 is consumption in $ today per ton of emissions
         so the marginal benefit is the slope of the utility function wrt x / slope of the utility function wrt c * ($ consumption / ton of emissions)
       '''
-      print 'Marginal benefit emissions reduction is', (delta_util_x / delta_util_c ) * delta_con * my_cost_model.consperton0 / delta_x
+      print('Marginal benefit emissions reduction is', (delta_util_x / delta_util_c ) * delta_con * my_cost_model.consperton0 / delta_x)
       base_x += increment
     else :
-      print 'delta_consumption_billions', delta_con * my_cost_model.consperton0 * my_tree.bau_emit_level[0]
-      print 'delta_emissions_gigatons', delta_x * my_tree.bau_emit_level[0]
+      print('delta_consumption_billions', delta_con * my_cost_model.consperton0 * my_tree.bau_emit_level[0])
+      print('delta_emissions_gigatons', delta_x * my_tree.bau_emit_level[0])
       deadweight = delta_con * my_cost_model.consperton0 / delta_x
-      print 'Deadweight $ loss of consumption per year per ton of mitigation of not pricing carbon in period 0', deadweight
+      print('Deadweight $ loss of consumption per year per ton of mitigation of not pricing carbon in period 0', deadweight)
 '''
   calculate the marginal utility at time 0 of state contingent increases in consumption at each node
 '''
-print ' marginal utility at time 0 of state contingent increases in consumption at each node '
+print(' marginal utility at time 0 of state contingent increases in consumption at each node ')
 delta_con = .01
 base_util = fm.utility_function( bestparams, my_tree, my_damage_model, my_cost_model )
-print ' base utility ', base_util
+print(' base utility ', base_util)
 for time_period in range(0, my_tree.utility_nperiods-1):
   is_tree_node = my_tree.decision_period[ time_period]
   tree_period = my_tree.utility_decision_period[time_period]
@@ -313,7 +316,7 @@ for time_period in range(0, my_tree.utility_nperiods-1):
       new_util = fm.utility_function( bestparams, my_tree, my_damage_model, my_cost_model )
       my_tree.node_consumption_epsilon[first_u_node+period_node] = 0.0
       marginal_utility = (base_util - new_util) / delta_con
-      print ' period ', tree_period, ' year ', 2015+my_tree.utility_times[time_period], ' node ', tree_node+period_node, ' utility', new_util, ' marginal_utility ', marginal_utility  
+      print(' period ', tree_period, ' year ', 2015+my_tree.utility_times[time_period], ' node ', tree_node+period_node, ' utility', new_util, ' marginal_utility ', marginal_utility  )
 '''
    done
 '''
