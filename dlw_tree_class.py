@@ -1,6 +1,7 @@
 import numpy as np
 
-class tree_model(object):
+class tree_model():
+    print("DEBUG: inside tree_model classs--------------------------")
     ''' This file contains code used to create a tree object
         this tree is used in the utility optimization of the daniel,litterman,wagner climate risk model
     
@@ -10,7 +11,7 @@ class tree_model(object):
         ---------
     '''
     '''   six period initialization    '''
-    def __init__(self,tp1=15,analysis=4,final_states=32,nperiods=6,peak_temp_interval=30.,x_dim=63,
+    def __init__(self,tp1=10,analysis=4,final_states=32,nperiods=6,peak_temp_interval=30.,x_dim=63,
                  sub_interval_length=5,prob_scale=1.0,growth=.02,eis=0.9,ra=7.0,time_pref=.005,
                  decision_times = [ 0, 15, 45, 85, 185, 285, 385],
                  print_options = [ 1, 1, 1, 1, 1,  1, 1, 0, 1, 1, 1 ] ):
@@ -75,6 +76,10 @@ class tree_model(object):
               delta consumption, SDF's and marginal utilities, sub-interval detail, GHG levels, SCC decomposition
               SCC decomposition intermediate calculations]
         '''
+        print("DEBUG: Inside tree_class.py")
+        print("tp1:",tp1)
+        print("analysis optimization:",analysis)
+        print("final_states:",final_states)
         self.analysis = analysis
         print("analysis =", analysis)
         decision_times[1] = tp1
@@ -249,6 +254,7 @@ class tree_model(object):
 
 
     def create_node_mapping(self):
+        print("DEBUG: inside create_node_mapping--------------------------")
         '''  sets up a tree structure
                create node_mapping -- nodes are points in the tree structure
 

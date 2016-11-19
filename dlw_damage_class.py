@@ -1,5 +1,7 @@
 import math
 import numpy as np
+#from celery import Celery # For running from web app
+#app = Celery('run_model',broker='amqp://', backend='amqp://')
 
 class damage_model(object):
     '''Includes functions to evaluate the damages for the dlw climate model
@@ -75,6 +77,9 @@ class damage_model(object):
             time paramter from Pindyck which indicates the time it takes for temp to get half way to its max value for a given level of ghg
         
         '''
+        print("DEBUG: Inside damage_class")
+        print("peak_temp:",peak_temp)
+        print("disaster_tail:",disaster_tail)
         self.my_tree = my_tree
         self.peak_temp = peak_temp
         self.disaster_tail = disaster_tail
