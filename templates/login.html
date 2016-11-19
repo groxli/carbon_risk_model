@@ -1,0 +1,119 @@
+<html>
+	<head>
+		<title>Carbon Risk Model</title>
+		<style>
+			.progress {
+				width: 100%;
+				text-align: center;
+			}
+		</style>
+		<link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+	</head>
+	<body>
+		<div class="container">
+			<div class="navbar navbar-default navbar-fixed-top">
+				<div class="container">
+					<div class="navbar-header">
+						<a href="../" class="navbar-brand">Carbon Risk Model</a>
+						<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+					</div>
+
+				</div>
+			</div>
+		</div>
+		</div>
+
+		<div class="container">
+			&nbsp;
+			<br>
+			&nbsp;
+			<br>
+			&nbsp;
+			<br>
+		</div>
+		<div class="container">
+			<form action="/login_check/" method="post" id="logon_form">
+				<label for="username">Username</label>
+				<input id="username" name="username" type="text" value="" placeholder="username" required />
+				<br>
+				<label for="password">Password</label>
+				<input id="password" name="password" type="password" value="" required />
+				<input type="submit" value="Logon" />
+			</form>
+		</div>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+		<script>
+			// Variable to hold request
+			var request;
+
+			// Bind to the submit event of our form
+			$("#logon_form2").submit(function(e) {
+				// add task status elements
+				div = $('<div class="progress"><div></div><div>0%</div><div>...</div><div>&nbsp;</div></div><hr>');
+				$('#progress').append(div);
+
+				// create a progress bar
+				var nanobar = new Nanobar({
+					bg : '#44f',
+					target : div[0].childNodes[0]
+				});
+
+				// Prevent default posting of form - put here to work in case of errors
+				e.preventDefault();
+
+				// Abort any pending request
+				if (request) {
+					request.abort();
+				}
+				// setup some local variables
+				var $form = $(this);
+
+				// Let's select and cache all the fields
+				var $inputs = $form.find("input, select, button, textarea");
+				//alert($inputs);
+				// Serialize the data in the form
+				var serializedData = $form.serialize();
+				//alert(serializedData);
+
+				// Let's disable the inputs for the duration of the Ajax request.
+				// Note: we disable elements AFTER the form data has been serialized.
+				// Disabled form elements will not be serialized.
+				$inputs.prop("disabled", true);
+
+				// Fire off the request to web server:
+				request = $.ajax({
+					type : 'POST',
+					url : '/login_check/',
+					data : serializedData
+				});
+
+				// Callback handler that will be called on success
+				request.done(function(response, textStatus, jqXHR) {
+					// Log a message to the console
+					console.log("Model scenario parameters submitted successfully.");
+				});
+
+				// Callback handler that will be called on failure
+				request.fail(function(jqXHR, textStatus, errorThrown) {
+					// Log the error to the console
+					console.error("The following error occurred: " + textStatus, errorThrown);
+				});
+				// Callback handler that will be called regardless
+				// if the request failed or succeeded
+				request.always(function() {
+					// Reenable the inputs
+					$inputs.prop("disabled", false);
+				});
+			});
+
+			$(document).ready(function() {
+				//alert("ready");
+			});
+		</script>
+	</body>
+</html>

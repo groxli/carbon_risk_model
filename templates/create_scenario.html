@@ -1,0 +1,260 @@
+<html>
+	<head>
+		<title>Carbon Risk Model</title>
+		<style>
+			.progress {
+				width: 100%;
+				text-align: center;
+			}
+		</style>
+		<link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
+	</head>
+	<body>
+		<div class="container">
+			<div class="navbar navbar-default navbar-fixed-top">
+				<div class="container">
+					<div class="navbar-header">
+						<a href="/" class="navbar-brand">Carbon Risk Model</a>
+						<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+							<span class="icon-bar"></span>
+						</button>
+					</div>
+					<div class="navbar-collapse collapse" id="navbar-main">
+						<ul class="nav navbar-nav">
+							<li>
+								<a href="/">Home</a>
+							</li>
+							<li>
+								<a href="/scenario/add/">Add Scenario</a>
+							</li>
+							<li>
+								<a href="/scenario/active_jobs/">Active Jobs</a>
+							</li>
+						</ul>
+
+						<ul class="nav navbar-nav navbar-right">
+							<li>
+								<a href="https://gitlab.com/groxli/carbon_risk_model" target="_blank">v0.5.0</a>
+							</li>
+							<li>
+								<a href="/logout/">Logout</a>
+							</li>
+						</ul>
+
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="container">
+			&nbsp;
+			<br>
+			&nbsp;
+			<br>
+			&nbsp;
+			<br>
+		</div>
+		<div class="container">
+			<h1>Create Scenario</h1>
+			<!--<button onclick="start_long_task();">Start Long Calculation</button><br><br>-->
+
+			<form action="#" method="POST" name="sim_form" id="sim_form">
+				<div class="well bs-component">
+					<form class="form-horizontal">
+						<fieldset>
+							<legend>
+								Enter Model Parameters
+							</legend>
+							<div class="form-group">
+								<label for="model_name" class="col-lg-2 control-label">Model Name</label>
+								<div class="col-lg-10">
+									<input type="text" class="form-control" id="model_name" name="model_name" placeholder="Model Name" required>
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label for="tp1" class="col-lg-2 control-label">Time Period (1-100 Years)</label>
+								<div class="col-lg-10">
+									<input type="range" name="tp1" min="1" max="101" step="10">
+								</div>
+							</div>
+
+							<div class="form-group">
+								<label class="col-lg-2 control-label">Tree Analysis</label>
+								<div class="col-lg-10">
+									<label class="col-lg-2 control-label">Optimization</label>									
+									<div class="radio">
+										<label>
+											<input type="radio" name="tree_analysis" id="tree_analysis0" value="0">
+											No Optimization </label>
+									</div>
+									<div class="radio">
+										<label>
+											<input type="radio" name="tree_analysis" id="tree_analysis1" value="1">
+											Optimization of Mitigation Path </label>
+									</div>
+									<div class="radio">
+										<label>
+											<input type="radio" name="tree_analysis" id="tree_analysis2" value="2">
+											Risk Decomposition </label>
+									</div>
+									<div class="radio">
+										<label>
+											<input type="radio" name="tree_analysis" id="tree_analysis3" value="3">
+											Marginal Cost of Waiting </label>
+									</div>
+									<div class="radio">
+										<label>
+											<input type="radio" name="tree_analysis" id="tree_analysis4" value="4" checked="">
+											Deadweight Loss </label>
+									</div>
+
+								</div>
+								<div class="col-lg-10">
+								<label for="tree_final_states" class="col-lg-2 control-label">Number of Final States</label>
+									<input type="text" class="form-control" id="tree_final_states" name="tree_final_states" placeholder="32" required>
+								</div>
+								
+							</div>
+
+							<div class="form-group">
+								<label class="col-lg-2 control-label">Damage Model</label>
+
+								<div class="col-lg-10">
+								<label for="damage_peak_temp" class="col-lg-2 control-label">Damage Peak Temperature</label>
+									<input type="text" class="form-control" id="damage_peak_temp" name="damage_peak_temp" placeholder="11.0" required>
+								</div>
+								<div class="col-lg-10">
+								<label for="damage_disaster_tail" class="col-lg-2 control-label">Disaster Tail</label>
+									<input type="text" class="form-control" id="damage_disaster_tail" name="damage_disaster_tail" placeholder="18.0" required>
+								</div>
+
+							</div>
+
+							<div class="form-group">
+								<div class="col-lg-10 col-lg-offset-2">
+									<button type="reset" class="btn btn-default">
+										Reset Values
+									</button>
+									<button type="submit" class="btn btn-primary">
+										Add Scenario to Queue
+									</button>
+								</div>
+							</div>
+
+						</fieldset>
+					</form>
+					<div id="source-button" class="btn btn-primary btn-xs" style="display: none;">
+						&lt; &gt;
+					</div>
+				</div>
+				<div>
+					<h3>Submitted Jobs</h3>
+				</div>
+				<div id="progress"></div>
+				<script src="//cdnjs.cloudflare.com/ajax/libs/nanobar/0.2.1/nanobar.min.js"></script>
+				<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+				<script>
+					// Variable to hold request
+					var request;
+
+					// Bind to the submit event of our form
+					$("#sim_form").submit(function(e) {
+						// add task status elements
+						div = $('<div class="progress progress-striped"><div></div><div>0%</div><div>...</div><div>&nbsp;</div></div><hr>');
+						$('#progress').append(div);
+
+						// create a progress bar
+						var nanobar = new Nanobar({
+							bg : '#44f',
+							target : div[0].childNodes[0]
+						});
+
+						// Prevent default posting of form - put here to work in case of errors
+						e.preventDefault();
+
+						// Abort any pending request
+						if (request) {
+							request.abort();
+						}
+						// setup some local variables
+						var $form = $(this);
+
+						// Let's select and cache all the fields
+						var $inputs = $form.find("input, select, button, textarea");
+
+						// Serialize the data in the form
+						var serializedData = $form.serialize();
+						//alert(serializedData);
+
+						// Let's disable the inputs for the duration of the Ajax request.
+						// Note: we disable elements AFTER the form data has been serialized.
+						// Disabled form elements will not be serialized.
+						$inputs.prop("disabled", true);
+
+						// Fire off the request to web server:
+						request = $.ajax({
+							type : 'POST',
+							url : '/scenario/run/',
+							data : serializedData,
+							success : function(data, status, request) {
+								status_url = request.getResponseHeader('Location');
+								update_progress(status_url, nanobar, div[0]);
+							},
+							error : function() {
+								alert('Unexpected error');
+							}
+						});
+
+						// Callback handler that will be called on success
+						request.done(function(response, textStatus, jqXHR) {
+							// Log a message to the console
+							console.log("Model scenario parameters submitted successfully.");
+						});
+
+						// Callback handler that will be called on failure
+						request.fail(function(jqXHR, textStatus, errorThrown) {
+							// Log the error to the console
+							console.error("The following error occurred: " + textStatus, errorThrown);
+						});
+						// Callback handler that will be called regardless
+						// if the request failed or succeeded
+						request.always(function() {
+							// Reenable the inputs
+							$inputs.prop("disabled", false);
+						});
+					});
+					function update_progress(status_url, nanobar, status_div) {
+						// send GET request to status URL
+						$.getJSON(status_url, function(data) {
+							// update UI
+							percent = parseInt(data['current'] * 100 / data['total']);
+							nanobar.go(percent);
+							$(status_div.childNodes[1]).text(percent + '%');
+							$(status_div.childNodes[2]).text(data['status']);
+							if (data['state'] != 'PENDING' && data['state'] != 'PROGRESS') {
+								if ('result' in data) {
+									// show result
+									$(status_div.childNodes[3]).text('Result: ' + data['result']);
+								} else {
+									// something unexpected happened
+									$(status_div.childNodes[3]).text('Result: ' + data['state']);
+								}
+							} else {
+								// rerun in 2 seconds
+								setTimeout(function() {
+									update_progress(status_url, nanobar, status_div);
+								}, 2000);
+							}
+						});
+					}
+
+
+					$(document).ready(function() {
+						//alert("ready");
+					});
+				</script>
+	</body>
+</html>
