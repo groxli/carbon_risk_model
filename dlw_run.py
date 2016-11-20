@@ -326,6 +326,7 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
     delta_con = .01
     base_util = fm.utility_function( bestparams, my_tree, my_damage_model, my_cost_model )
     print(' base utility ', base_util)
+
     for time_period in range(0, my_tree.utility_nperiods-1):
       is_tree_node = my_tree.decision_period[ time_period]
       tree_period = my_tree.utility_decision_period[time_period]
@@ -338,13 +339,12 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
           my_tree.node_consumption_epsilon[first_u_node+period_node] = 0.0
           marginal_utility = (base_util - new_util) / delta_con
           print(' period ', tree_period, ' year ', 2015+my_tree.utility_times[time_period], ' node ', tree_node+period_node, ' utility', new_util, ' marginal_utility ', marginal_utility  )
-
+          
     #return app.update_state(state='PROGRESS', meta={'current': 'DEBUG', \
     #                                                'total': 100, \
     #                                                'status': 'COMPLETED'})
     return {'current': 100, 'total': 100, 'status': 'Model run completed.',
             'result': 100}
-            
     '''
        done
     '''
