@@ -15,7 +15,8 @@ class optimize_plan(object):
         my_tree : tree object
             Definition of the tree structure
 
-        derivative_check : integerif = 1, then print analytic and numerical derivatives else check whether they match and if not give error message
+        derivative_check : integer 
+            if = 1, then print analytic and numerical derivatives else check whether they match and if not give error message
         
         alt_input : integer
             if = 1, then read input guess from an alternative input file
