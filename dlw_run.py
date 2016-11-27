@@ -65,6 +65,10 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
     print('u_nodes', my_tree.utility_period_nodes)
     print('u_tree_period', my_tree.utility_decision_period)
     
+    # The return parameters:
+    delta_emissions_gigatons = None
+    cost_per_ton = None
+    
     #self.update_state(state='PROGRESS',
     #                      meta={'current': 25, 'total': 99,
     #                            'status': 'Finished model tree'})
@@ -189,7 +193,6 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
       '''
          create the output, including the decomposition of SCC into the time paths of the net present value contributions from expected damage and risk premium components
       '''
-      my_optimization.create_output(bestparams, base, my_damage_model, my_cost_model, my_tree)
     
       '''
          this section of code addresses the question: what is the cost of waiting to start mitigation untilt the end of the first period
@@ -306,6 +309,7 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
           '''
           delta_con = brentq( my_optimization.find_bec, -.1, .99, args=( my_tree, my_damage_model, my_optimization, my_cost_model))
           print('delta consumption to match unconstrained optimal plan', delta_con)
+        cost_per_ton = my_cost_model.consperton0
         if my_tree.analysis == 3:
           print('Marginal cost of emissions reduction at x = ', base_x, 'is', marginal_cost)
           '''
@@ -316,7 +320,8 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
           base_x += increment
         else :
           print('delta_consumption_billions', delta_con * my_cost_model.consperton0 * my_tree.bau_emit_level[0])
-          print('delta_emissions_gigatons', delta_x * my_tree.bau_emit_level[0])
+          delta_emissions_gigatons =  delta_x * my_tree.bau_emit_level[0]
+          print('delta_emissions_gigatons', delta_emissions_gigatons)
           deadweight = delta_con * my_cost_model.consperton0 / delta_x
           print('Deadweight $ loss of consumption per year per ton of mitigation of not pricing carbon in period 0', deadweight)
     '''
@@ -338,13 +343,10 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
           new_util = fm.utility_function( bestparams, my_tree, my_damage_model, my_cost_model )
           my_tree.node_consumption_epsilon[first_u_node+period_node] = 0.0
           marginal_utility = (base_util - new_util) / delta_con
+          #r[tree_period] = {'year':2015+my_tree.utility_times[time_period]}
           print(' period ', tree_period, ' year ', 2015+my_tree.utility_times[time_period], ' node ', tree_node+period_node, ' utility', new_util, ' marginal_utility ', marginal_utility  )
           
-    #return app.update_state(state='PROGRESS', meta={'current': 'DEBUG', \
-    #                                                'total': 100, \
-    #                                                'status': 'COMPLETED'})
-    return {'current': 100, 'total': 100, 'status': 'Model run completed.',
-            'result': 100}
+    return cost_per_ton, delta_emissions_gigatons
     '''
        done
     '''

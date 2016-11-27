@@ -1,73 +1,19 @@
-<html>
-  <head>
-    <title>Carbon Risk Model</title>
-    <style>
-        .progress {
-            width: 100%;
-            text-align: center;
-        }
-    </style>
-    <link rel="stylesheet" type="text/css" href="/static/bootstrap.min.css" />
-</head>
-<body>
-		<div class="container">
-			<div class="navbar navbar-default navbar-fixed-top">
-				<div class="container">
-					<div class="navbar-header">
-						<a href="/" class="navbar-brand">Carbon Risk Model</a>
-						<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-							<span class="icon-bar"></span>
-						</button>
-					</div>
-					<div class="navbar-collapse collapse" id="navbar-main">
-						<ul class="nav navbar-nav">
-							<li>
-								<a href="/">Home</a>
-							</li>
-							<li>
-								<a href="/scenario/add/">Add Scenario</a>
-							</li>
-							<li>
-								<a href="/scenario/active_jobs/">Active Jobs</a>
-							</li>
-						</ul>
+{% extends "layout.html" %}
+{% block content %}
+<!-- Tables
+================================================== -->
+<div class="bs-docs-section">
 
-						<ul class="nav navbar-nav navbar-right">
-							<li>
-								<a href="https://gitlab.com/groxli/carbon_risk_model" target="_blank">v0.5.0</a>
-							</li>
-							<li>
-								<a href="/logout/">Logout</a>
-							</li>
-						</ul>
+	<div class="row">
+		<div class="col-lg-12">
+			<div class="page-header">
+				<h1 id="tables">Active Jobs</h1>
+			</div>
 
-					</div>
-				</div>
+			<div class="bs-component">
+				{{ active_jobs }}
 			</div>
 		</div>
-    
-     <div class="container">&nbsp;<br>&nbsp;<br>&nbsp;<br>
-     </div>
-     <div class="container">
-
-      <!-- Tables
-      ================================================== -->
-      <div class="bs-docs-section">
-
-        <div class="row">
-          <div class="col-lg-12">
-            <div class="page-header">
-              <h1 id="tables">Active Jobs</h1>
-            </div>
-
-            <div class="bs-component">
-             {{ active_jobs }}
-            </div><!-- /example -->
-          </div>
-        </div>
-      </div>
-</div>
-</body>
-</html>
+	</div>
+</div><!-- /Tables -->
+{% endblock %}

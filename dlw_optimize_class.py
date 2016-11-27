@@ -389,7 +389,7 @@ class optimize_plan(object):
                 years_to_maturity = self.my_tree.utility_times[ np ]
                 perp_yield = brentq( self.perpetuity_yield, 0.1, 10., args=( np*5, self.my_tree.discount_prices[np]))
                 print('Print_Option[4] Period', my_tree.utility_nperiods-1, 'years-to-maturity', years_to_maturity, 'price of bond', self.my_tree.discount_prices[np], ' yield ', perp_yield)
-        return
+        return price
     
     '''
        function to call from optimizer to find the risk free zero coupon bond yield
