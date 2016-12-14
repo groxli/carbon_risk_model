@@ -2,6 +2,7 @@ import configparser # For loading in job settings.
 import numpy as np
 import random
 import dlw_utility as fm
+from tqdm import tqdm # For timer bar.
 
 class optimize_plan(object):
     '''Includes functions and parameters to control the optimization of the climate model
@@ -85,7 +86,7 @@ class optimize_plan(object):
         f = open(self.output_path+'bestparams.txt', 'w')
         rows = int(self.my_tree.x_dim / 6)-1
         rest = rows*6
-        for ip in range(0, (rows-1)*6+1, 6):
+        for ip in tqdm(range(0, (rows-1)*6+1, 6)):
             f.writelines( str(plan[ip]) + "\t" + str(plan[ip+1]) + "\t" + str(plan[ip+2]) + "\t" + str(plan[ip+3]) + "\t" + str(plan[ip+4]) + "\t" + str(plan[ip+5]) + "\n")
             
         f.writelines( str(plan[rest]) + "\t" + str(plan[rest+1]) + "\t" + str(plan[rest+2]) + "\t" + str(plan[rest+3]) + "\t" + str(plan[rest+4]) + "\t" + str(plan[rest+5]) + "\t" + str(plan[rest+6]) + "\n" )
@@ -99,7 +100,7 @@ class optimize_plan(object):
         f = open(self.output_path+'/bestparams6.txt', 'w')
         rows = int(self.my_tree.x_dim / 6)-1
         rest = rows*6
-        for ip in range(0, (rows-1)*6+1, 6):
+        for ip in tqdm(range(0, (rows-1)*6+1, 6)):
             f.writelines( str(plan[ip]) + "\t" + str(plan[ip+1]) + "\t" + str(plan[ip+2]) + "\t" + str(plan[ip+3]) + "\t" + str(plan[ip+4]) + "\t" + str(plan[ip+5]) + "\n")
             
         f.writelines( str(plan[rest]) + "\t" + str(plan[rest+1]) + "\t" + str(plan[rest+2]) + "\t" + str(plan[rest+3]) + "\t" + str(plan[rest+4]) + "\t" + str(plan[rest+5]) + "\t" + str(plan[rest+6]) + "\t" + str(plan[rest+7]) + "\t" + str(plan[rest+8]) + "\n" )
@@ -153,6 +154,8 @@ class optimize_plan(object):
             the cost model used in the optimization
 
         '''
+        '''
+        TODO: Determine if these print statements are required for production runs.
         if my_tree.analysis >= 1 :
             if my_tree.print_options[0] == 1:
                 print('Print_Option[0] Maximized_utility_=', -best_fit)
@@ -167,7 +170,7 @@ class optimize_plan(object):
                 for i in range(lines*6,my_tree.x_dim-1) :
                         print(best_mitigation_plan[i]) #,
                 print(best_mitigation_plan[my_tree.x_dim-1])
-                    
+        '''            
         price = my_cost_model.price_by_state( best_mitigation_plan[0],0.,0.)
 
         if my_tree.analysis >= 1 :
@@ -175,9 +178,10 @@ class optimize_plan(object):
                 print('Print_Option[2] Social_Cost_of_Carbon_=', price)
 
         if my_tree.print_options[3] == 1:
+            print("dlw_optimize: my_tree.print_options[3] == 1\n")
             emissions_to_bau = my_tree.emissions_to_ghg[my_tree.nperiods-1] / my_tree.emissions_per_period[my_tree.nperiods-1]
             bau_path = 400
-            for p in range(0, my_tree.nperiods):
+            for p in tqdm(range(0, my_tree.nperiods)):
                 ave_price = 0.
                 first_node = my_tree.decision_period_pointer[p]
                 this_period_time = my_tree.decision_times[p+1] - my_tree.decision_times[p]
@@ -197,14 +201,17 @@ class optimize_plan(object):
                     ave_price += my_tree.node_probs[first_node+n] * price
                     average_mitigation = my_tree.ave_mitigation[first_node+n]
                     average_emissions = my_tree.additional_emissions_by_state[first_node+n] / (this_period_time*emissions_to_bau)
-                    print('Print_Option[3] Period', p, 'time', int(2015+my_tree.decision_times[p]), 'node', first_node+n, 'has_prob', my_tree.node_probs[first_node+n], 'Emission_mitigation_of', best_mitigation_plan[first_node+n], 'Price', price, 'Consumption', consump*(1.-my_tree.damage_by_state[first_node+n])*(1.-my_tree.cost_by_state[first_node+n]),'Average_mitigation', average_mitigation, 'Cost', my_tree.cost_by_state[first_node+n], 'Damage', my_tree.damage_by_state[first_node+n],' GHG_level_in_state', my_tree.ghg_by_state[first_node+n], 'Average_annual_emissions_in_state', average_emissions)
+                    #print('Print_Option[3] Period', p, 'time', int(2015+my_tree.decision_times[p]), 'node', first_node+n, 'has_prob', my_tree.node_probs[first_node+n], 'Emission_mitigation_of', best_mitigation_plan[first_node+n], 'Price', price, 'Consumption', consump*(1.-my_tree.damage_by_state[first_node+n])*(1.-my_tree.cost_by_state[first_node+n]),'Average_mitigation', average_mitigation, 'Cost', my_tree.cost_by_state[first_node+n], 'Damage', my_tree.damage_by_state[first_node+n],' GHG_level_in_state', my_tree.ghg_by_state[first_node+n], 'Average_annual_emissions_in_state', average_emissions)
                 bau_path += emissions_to_bau * my_tree.emissions_per_period[p]
-                print('Print_Option[3] Period', p, 'time', int(2015+my_tree.decision_times[p]), 'Average_price', ave_price, 'BAU_average_annual_emissions_in_period', my_tree.emissions_per_period[p]/this_period_time, 'end_of_period_bau_ghg_level', bau_path)
+                #print('Print_Option[3] Period', p, 'time', int(2015+my_tree.decision_times[p]), 'Average_price', ave_price, 'BAU_average_annual_emissions_in_period', my_tree.emissions_per_period[p]/this_period_time, 'end_of_period_bau_ghg_level', bau_path)
 
-            print('Print_Option[3] Final_period_consumption_and_damage')
+            #print('Print_Option[3] Final_period_consumption_and_damage')
+            '''
+            TODO: Determine if these print statements are required for production runs.
             for state in range(0, my_tree.final_states):
                 print('Print_Option[3] Period', my_tree.nperiods, 'time', int(2015+my_tree.decision_times[my_tree.nperiods]), 'final_state', state, 'consumption', my_tree.potential_consumption[my_tree.nperiods]*(1.-my_tree.final_damage_by_state[state]), 'forward_damage', my_tree.final_damage_by_state[state])
-
+            '''
+                
         ''' use root finder and the function "find_term_structure" to find the bond price (and yield) that reflects the value of a fixed $1 payment in all nodes at time np '''
         from scipy.optimize import brentq        
         np = my_tree.utility_nperiods-2
@@ -215,6 +222,7 @@ class optimize_plan(object):
         years_to_maturity = my_tree.utility_times[np]
 
         if my_tree.print_options[4] == 1:
+            print("dlw_optimize: my_tree.print_options[4] == 1")
             print('Print_Option[4] Zero_coupon_bond_maturing_at_time', 2015+5*np, 'has_price_=', res, 'and_yield_=', 100. * (1./(res**(1./years_to_maturity))-1.))
                 
         '''
@@ -239,7 +247,8 @@ class optimize_plan(object):
             '''
             my_tree.sdf_in_tree[0] = 1.0
 
-            for time_period in range(1, self.my_tree.utility_nperiods):
+            print("dlw_optimize: my_tree.analysis == 2")
+            for time_period in tqdm(range(1, self.my_tree.utility_nperiods)):
                 '''  for a given time_period in the utility_tree, tree_node points to the first node in the period of the last decision in the decision tree'''
                 tree_node = my_tree.decision_period_pointer[ min( my_tree.nperiods-1, my_tree.utility_decision_period[time_period-1]+1) ]
                 ''' first_node points to the first node in period time_period of the utility tree '''
@@ -260,11 +269,14 @@ class optimize_plan(object):
                     '''
                     damage_in_node = (my_tree.d_consumption_by_state[first_node+period_node])
                     expected_damages += damage_in_node * my_tree.node_probs[tree_node+period_node]
+                    
+                    '''
+                    TODO: Determine if these print statements are required for production runs.
                     if time_period <= my_tree.print_options[7] :
-                        ''' if this is a risk decomposition and utility sub-interval output is desired '''
+                        # if this is a risk decomposition and utility sub-interval output is desired.
                         print('Print_Option[7] Period', time_period, 'node', first_node+period_node, 'delta_consumption', my_tree.d_consumption_by_state[first_node+period_node], ' consumption_level', my_tree.consumption_by_state[first_node+period_node])
-
-                    ''' from_node is the node from the previous period that leads to period_node '''
+                    '''
+                    # from_node is the node from the previous period that leads to period_node.
                     if my_tree.information_period[time_period-1] == 1 :
                         from_node = my_tree.utility_period_pointer[time_period-1] + int(period_node/2)
                     else :
@@ -280,36 +292,45 @@ class optimize_plan(object):
                             total_prob = my_tree.node_probs[tree_node+period_node] + my_tree.node_probs[tree_node+period_node+1]
                             ''' sdf is the stochastic discount factor required to discount consumption in period_node back to from_node '''
                             sdf = (total_prob/my_tree.node_probs[tree_node+period_node]) * my_tree.marginal_utility_by_state[from_node][1]/my_tree.marginal_utility_by_state[from_node][0]
+                            '''
+                            TODO: Determine if these print statements are required for production runs.
                             if time_period <= my_tree.print_options[7] :
                                 print('Print_Option[7] Branch_from_node', from_node, 'MU_wrt_c(t)', my_tree.marginal_utility_by_state[from_node][0])
                                 print('Print_Option[7] Node:', tree_node+period_node,'SDF',sdf,'MU_wrt_c(t+1)_in_node', my_tree.marginal_utility_by_state[from_node][1])
                                 print('Print_Option[7] Probs:_up_node', tree_node+period_node, 'down_node', tree_node+period_node+1, 'probs', my_tree.node_probs[tree_node+period_node], my_tree.node_probs[tree_node+period_node+1])
+                            '''
                         else:
                             total_prob = my_tree.node_probs[tree_node+period_node] + my_tree.node_probs[tree_node+period_node-1]
                             sdf = (total_prob/my_tree.node_probs[tree_node+period_node]) * my_tree.marginal_utility_by_state[from_node][2]/my_tree.marginal_utility_by_state[from_node][0]
+                            '''
+                            TODO: Determine if these print statements are required for production runs.
                             if time_period <= my_tree.print_options[7] :
                                 print('Print_Option[7] Branch_from_node', from_node, 'MU_wrt_c(t)', my_tree.marginal_utility_by_state[from_node][0])
                                 print('Print_Option[7] Node:', tree_node+period_node, 'SDF', sdf, 'MU_wrt_c(t+1)_in_node', my_tree.marginal_utility_by_state[from_node][2], 'MU_wrt_c(t)', my_tree.marginal_utility_by_state[from_node][0])
                                 print('Print_Option[7] Probs:_down_node', tree_node+period_node, 'up_node', tree_node+period_node-1, 'probs', my_tree.node_probs[tree_node+period_node], my_tree.node_probs[tree_node+period_node-1])
+                            '''
                     else:
-                        ''' if no branching occurs this period then the probability of reaching period_node is 1 '''
+                        # if no branching occurs this period then the probability of reaching period_node is 1
                         sdf = my_tree.marginal_utility_by_state[from_node][1]/my_tree.marginal_utility_by_state[from_node][0]
                         mu_next = my_tree.marginal_utility_by_state[from_node][1]
-                        ''' in the final period the marginal utility is with respect to the steady-state continuation value '''
+                        # in the final period the marginal utility is with respect to the steady-state continuation value
                         if time_period == my_tree.utility_nperiods-1 :
                             sdf = my_tree.final_total_derivative_term[period_node]/my_tree.marginal_utility_by_state[from_node][0]
                             mu_next = my_tree.final_total_derivative_term[period_node]
+                        '''
+                        TODO: Determine if these print statements are required for production runs.
                         if time_period <= my_tree.print_options[7] :
                             print('Print_Option[7] No_branch_from_node', from_node, 'SDF', sdf, 'MU_wrt_c(t)', my_tree.marginal_utility_by_state[from_node][0], 'MU_wrt_c(t+1)_in_next_node', mu_next)
-                    ''' sdf_in_tree is the discount factor used to present value consumption in node period_node (at time time_period) '''
+                        '''
+                    # sdf_in_tree is the discount factor used to present value consumption in node period_node (at time time_period)
                     my_tree.sdf_in_tree[first_node+period_node] = my_tree.sdf_in_tree[ from_node ] * sdf
-                    ''' the expected_sdf is the probability weighted discount factors in the nodes at time time_period '''
+                    # the expected_sdf is the probability weighted discount factors in the nodes at time time_period
                     expected_sdf += my_tree.sdf_in_tree[first_node+period_node] * my_tree.node_probs[tree_node+period_node]
-                    ''' cross_product_sdf_damages is the expected cross_product of sdf's and damages at time time_period '''
+                    # cross_product_sdf_damages is the expected cross_product of sdf's and damages at time time_period
                     cross_product_sdf_damages += my_tree.sdf_in_tree[first_node+period_node] * damage_in_node * my_tree.node_probs[tree_node+period_node]
-                ''' store the expected sdf, which is the present value at time 0 of $1 received at time time_period'''
+                # store the expected sdf, which is the present value at time 0 of $1 received at time time_period.
                 my_tree.discount_prices[time_period] = expected_sdf
-                ''' cov_term is the cross_product minus the product of the expected SDF and the expected damage at time time_period '''
+                # cov_term is the cross_product minus the product of the expected SDF and the expected damage at time time_period.
                 cov_term = cross_product_sdf_damages - expected_sdf * expected_damages
 
                 ''' now calculated the components of net discounted damage and the risk premium which arise in period time_period per $ spent on mitigation at time 0 (consumption_cost) '''
@@ -317,14 +338,20 @@ class optimize_plan(object):
                     on consumption during this interval in order to be left with only the marginal damage impact on consumption '''
                 if my_tree.utility_decision_period[ time_period] == 0 :
                     net_discounted_damage = -(expected_damages+my_tree.d_cost_by_state[time_period,1])*expected_sdf/consumption_cost
+                    '''
+                    TODO: Determine if these print statements are required for production runs.
                     if my_tree.print_options[10] == 1 :
                         print('Print_Option[10] Period', time_period, 'expected_damages', -expected_damages/consumption_cost, 'discount_price', expected_sdf, 'cross_product', -cross_product_sdf_damages/consumption_cost, 'cov_term', -cov_term/consumption_cost, 'net_discounted_damage', net_discounted_damage,'d_cost', -my_tree.d_cost_by_state[time_period,1]/consumption_cost)
-                    ''' sum the present value of the costs of mitigation throughout the first decision period per $ spent on mitigation at time 0 '''
+                    '''
+                    # sum the present value of the costs of mitigation throughout the first decision period per $ spent on mitigation at time 0
                     d_cost_sum += -my_tree.d_cost_by_state[time_period,1] * expected_sdf / consumption_cost
                 else :
                     net_discounted_damage = -expected_damages*expected_sdf/consumption_cost
+                    '''
+                    TODO: Determine if these print statements are required for production runs.
                     if my_tree.print_options[10] == 1 :
                         print('Print_Option[10] Period', time_period, 'expected_damages', -expected_damages/consumption_cost, 'discount_price', expected_sdf, 'cross_product', -cross_product_sdf_damages/consumption_cost, 'cov_term', -cov_term/consumption_cost, 'net_discounted_damage', net_discounted_damage)
+                    '''
                 my_tree.net_expected_damages[time_period] = net_discounted_damage
                 my_tree.risk_premium[time_period] = -cov_term/consumption_cost
                 ''' sum (over time) the components of the present value of expected damages and the risk premium'''
@@ -339,56 +366,72 @@ class optimize_plan(object):
             for n in range(0, self.my_tree.decision_nodes[p]):
                 ''' no branching in the last period '''
                 if p == self.my_tree.nperiods-1 :
+                    '''
+                    TODO: Determine if these print statements are required for production runs.
                     if my_tree.print_options[6] == 1 :
                         print('Print_Option[6] Period', p,'time', int(2015+my_tree.decision_times[p]), 'node', first_node+n, 'SDF=', my_tree.marginal_utility_in_tree[first_node+n,1] / my_tree.marginal_utility_in_tree[ first_node+n, 0 ]) #,
                         print('Print_Option[6] Marginal_utility(c(t)) ', my_tree.marginal_utility_in_tree[first_node+n, 0], 'Marginal_utility(c(t+1))', self.my_tree.marginal_utility_in_tree[first_node+n, 1])
+                    '''
                 else :
                     if my_tree.print_options[6] == 1 :
                         to_node = self.my_tree.next_node[first_node+n][0]
                         prob_up = self.my_tree.node_probs[to_node]
                         prob_down = self.my_tree.node_probs[to_node+1]
                         total_prob = prob_up + prob_down
+                        '''
+                        TODO: Determine if these print statements are required for production runs.
                         print('Print_Option[6] Period', p, 'time', int(2015+my_tree.decision_times[p]), 'node', first_node+n, 'SDF_up=  ', (total_prob/prob_up) * self.my_tree.marginal_utility_in_tree[first_node+n,1] / self.my_tree.marginal_utility_in_tree[ first_node+n, 0 ]) #,
                         print('Print_Option[6] SDF_down=', (total_prob/prob_down) * self.my_tree.marginal_utility_in_tree[first_node+n,2] / self.my_tree.marginal_utility_in_tree[ first_node+n, 0 ], 'MU ', self.my_tree.marginal_utility_in_tree[first_node+n, 0], 'Marginal_utility(c(t+1))_up ', self.my_tree.marginal_utility_in_tree[first_node+n, 1]) #,
                         print('Print_Option[6] Marginal_utility(c(t+1))_down ', self.my_tree.marginal_utility_in_tree[first_node+n, 2])
+                        '''
 
         ''' if desired, print out the levels of GHG in each node '''
         if my_tree.print_options[8] == 1 :
             for p in range(0, my_tree.nperiods):
                 first_node = my_tree.decision_period_pointer[p]
+                '''
+                TODO: Determine if these print statements are required for production runs.
                 for n in range(0, my_tree.decision_nodes[p]):
                     print('Print_Option[8] Period', p, 'time', int(2015+my_tree.decision_times[p]), 'node', first_node+n, 'GHG_level=', my_tree.ghg_by_state[first_node+n])
+                '''
                 
             first_node = my_tree.x_dim
+            '''
+            TODO: Determine if these print statements are required for production runs.
             for n in range(0, my_tree.final_states):
                 print('Print_Option[8] Period', my_tree.nperiods, 'time', int(2015+my_tree.decision_times[my_tree.nperiods]), 'node', first_node+n, 'GHG_level= ', my_tree.ghg_by_state[first_node+n])
-
+            '''
         if my_tree.analysis == 2 :
             total = net_discounted_expected_damages + risk_premium
-            '''  decompose the Social Cost of Carbon into the expected damages component versus the risk premium '''
+            #  decompose the Social Cost of Carbon into the expected damages component versus the risk premium.
+            '''
+            TODO: Determine if these print statements are required for production runs.
             print('Social_cost_of_carbon', my_cost_model.price_by_state( best_mitigation_plan[0],0.,0.))
             print('Discounted_expected_damages', (net_discounted_expected_damages/total) * my_cost_model.price_by_state( best_mitigation_plan[0],0.,0.))
             print('Risk_premium', (risk_premium/total) * my_cost_model.price_by_state( best_mitigation_plan[0],0.,0.))
-
-            ''' print the decomposition of expected damages and risk premium over time  '''
+            '''
+            # print the decomposition of expected damages and risk premium over time.
             if my_tree.print_options[9] == 1:
                 damage_scale = my_cost_model.price_by_state( best_mitigation_plan[0],0.,0.)/(net_discounted_expected_damages+risk_premium)
                 for np in range(1, my_tree.utility_nperiods):
                     my_tree.net_expected_damages[np] *= damage_scale
                     my_tree.risk_premium[np] *= damage_scale
-                    print('Print_Option[9] Period', np, 'Year', 2015+np*my_tree.sub_interval_length, 'Net_discounted_expected_damage', my_tree.net_expected_damages[np], 'Risk_premium', my_tree.risk_premium[np])
+                    # TODO: Determine if these print statements are required for production runs.
+                    #print('Print_Option[9] Period', np, 'Year', 2015+np*my_tree.sub_interval_length, 'Net_discounted_expected_damage', my_tree.net_expected_damages[np], 'Risk_premium', my_tree.risk_premium[np])
                 
         ''' if desired, print out the yield curve '''
         if my_tree.print_options[4] == 1 :
             if my_tree.analysis == 2 :
                 for np in range(1, my_tree.utility_nperiods-1):
                     years_to_maturity = self.my_tree.utility_times[ np ]
-                    print('Print_Option[4] Period', np, 'years-to-maturity', years_to_maturity, 'price of bond', self.my_tree.discount_prices[np], ' yield ', 100. * (1./(self.my_tree.discount_prices[np]**(1./years_to_maturity))-1.))
+                    # TODO: Determine if these print statements are required for production runs.
+                    #print('Print_Option[4] Period', np, 'years-to-maturity', years_to_maturity, 'price of bond', self.my_tree.discount_prices[np], ' yield ', 100. * (1./(self.my_tree.discount_prices[np]**(1./years_to_maturity))-1.))
                 ''' find the yield on a perpetuity that begins paying at the time of the steady state continuation term '''
                 np = my_tree.utility_nperiods-1
                 years_to_maturity = self.my_tree.utility_times[ np ]
                 perp_yield = brentq( self.perpetuity_yield, 0.1, 10., args=( np*5, self.my_tree.discount_prices[np]))
-                print('Print_Option[4] Period', my_tree.utility_nperiods-1, 'years-to-maturity', years_to_maturity, 'price of bond', self.my_tree.discount_prices[np], ' yield ', perp_yield)
+                # TODO: Determine if these print statements are required for production runs.
+                #print('Print_Option[4] Period', my_tree.utility_nperiods-1, 'years-to-maturity', years_to_maturity, 'price of bond', self.my_tree.discount_prices[np], ' yield ', perp_yield)
         return price
     
     '''
