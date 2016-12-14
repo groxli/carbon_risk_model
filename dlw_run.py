@@ -20,6 +20,7 @@ from scipy.optimize import fmin_l_bfgs_b
 from scipy.optimize import brentq
 import pandas as pd # For loading in difference sceanrio configurations.
 from celery import Celery # For running from web app.
+from tqdm import tqdm # For timer bar.
 
 # For 1) Brokering distributed jobs and 2) keeping track of the
 # job statuses, etc..
@@ -35,7 +36,7 @@ app = Celery('run_model', broker='amqp://', backend='amqp://')
 '''
 
 @app.task # Celery decorator for making the run_model() distributed.
-def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11.0, damage_disaster_tail=18.0):
+def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11.0, damage_disaster_tail=18.0, draws=50):
     print('These arguments set in batch mode')
     #print('growth rate = ', sys.argv[1]
     # Original 1st parm: print('period_1_years =', sys.argv[1])
@@ -76,7 +77,7 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
       initialize the damage class
     '''
     # DAMAGE CLASS
-    my_damage_model = damage_model(my_tree=my_tree, peak_temp=damage_peak_temp, disaster_tail=damage_disaster_tail)
+    my_damage_model = damage_model(my_tree=my_tree, peak_temp=damage_peak_temp, disaster_tail=damage_disaster_tail, draws=draws)
     my_damage_model.damage_function_initialization()
     
     '''
@@ -115,14 +116,17 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
     base_grad = fm.analytic_utility_gradient(my_optimization.guess, my_tree, my_damage_model, my_cost_model )
     delta = .00001
     guess = my_optimization.guess
-    for p in range(0,my_tree.x_dim):
+    for p in tqdm(range(0,my_tree.x_dim)):
       guess[p] += delta
       base_plus_p = fm.utility_function( guess, my_tree, my_damage_model, my_cost_model )
       num_deriv = (base_plus_p-base)/delta
+      '''
+      TODO: Determine if this code block can be commented out for production runs.
       if abs((base_grad[p]-num_deriv)/num_deriv) > .05 :
         print('CHECK GRADIENT: ','p = ', p, 'derivative calculation = ', base_grad[p], 'numerical derivative = ', num_deriv)
       if my_optimization.derivative_check == 1 :
         print('p', p, 'derivative =', base_grad[p], 'numerical derivative', num_deriv)
+      '''  
       guess[p] -= delta
       
     # OPTIMIZE WITH SCIPY
@@ -137,12 +141,12 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
       my_optimization.set_constraints(constrain=0)
       res = fmin_l_bfgs_b( fm.utility_function,guess,fprime=fm.analytic_utility_gradient,factr=1.,pgtol=1.0e-5,bounds=(my_optimization.xbounds),maxfun=600,args=([my_tree, my_damage_model, my_cost_model]))
       bestfit = res[1]
-      print('best fit', bestfit)
+      #print('best fit', bestfit)
       bestparams = res[0]
-      print('best parameters', bestparams)
+      #print('best parameters', bestparams)
       retparam = res[2]
-      print('gradient', retparam['grad'])
-      print('function calls', retparam['funcalls'])
+      #print('gradient', retparam['grad'])
+      #print('function calls', retparam['funcalls'])
     else :
       bestfit = base
       bestparams = guess
@@ -164,10 +168,10 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
        this is done so that in the next we can increment the mitigation at time 0 and to calculate the marginal changes in consumption and cost
     '''
     if my_tree.analysis == 2:
-      for node in range(0, my_tree.utility_full_tree) :
+      for node in tqdm(range(0, my_tree.utility_full_tree)):
         my_tree.d_consumption_by_state[node] = my_tree.consumption_by_state[node]
     
-      for sub_period in range(0, my_tree.first_period_intervals) :
+      for sub_period in tqdm(range(0, my_tree.first_period_intervals)):
         potential_consumption = (1.+my_tree.growth)**(my_tree.sub_interval_length * sub_period)
         my_tree.d_cost_by_state[sub_period,0] = potential_consumption * my_tree.cost_by_state[0]
       
@@ -182,10 +186,10 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
       '''
          now calculate the changes in consumption and the mitigation cost component of consumption per unit change in mitigation in the new optimal plan
       '''
-      for node in range(0, my_tree.utility_full_tree) :
+      for node in tqdm(range(0, my_tree.utility_full_tree)):
         my_tree.d_consumption_by_state[node] = (my_tree.consumption_by_state[node]-my_tree.d_consumption_by_state[node])/delta_x
     
-      for sub_period in range(0, my_tree.first_period_intervals) :
+      for sub_period in tqdm(range(0, my_tree.first_period_intervals)):
         potential_consumption = (1.+my_tree.growth)**(my_tree.sub_interval_length * sub_period)
         my_tree.d_cost_by_state[sub_period,1] = ( potential_consumption * my_tree.cost_by_state[0] - my_tree.d_cost_by_state[sub_period,0] )/delta_x
       bestparams[0] -= delta_x
@@ -243,7 +247,7 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
            when my_tree.analysis = 4 the current mitigation is indeed from the unconstrained optimal plan
         '''
         if my_tree.analysis == 3 :
-          print('base_x', base_x, 'delta_x', delta_x)
+          #print('base_x', base_x, 'delta_x', delta_x)
           newparams[0] += delta_x
           my_tree.first_period_epsilon = lump_sum
           my_optimization.set_constraints(constrain=1, node_0 = newparams[0], node_1 = newparams[1], node_2 = newparams[2])
@@ -269,7 +273,7 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
         '''
         delta_util_x = newfit - basefit
       
-        print('delta_util_x', delta_util_x)
+        #print('delta_util_x', delta_util_x)
     
         if my_tree.analysis == 3:
           '''
@@ -284,16 +288,16 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
           my_tree.first_period_epsilon = lump_sum
           my_tree.first_period_epsilon += delta_con
           baseparams[0]= base_x
-          print('epsilon', my_tree.first_period_epsilon)
+          #print('epsilon', my_tree.first_period_epsilon)
           util_given_delta_con = fm.utility_function( baseparams, my_tree, my_damage_model, my_cost_model )
           delta_util_c = util_given_delta_con - basefit
           my_tree.first_period_epsilon = 0.0
-          print('basefit', basefit, 'newfit', newfit, 'util_given_delta', util_given_delta_con)
-          print('delta_con', delta_con)
-          print('delta_util_c', delta_util_c)
+          #print('basefit', basefit, 'newfit', newfit, 'util_given_delta', util_given_delta_con)
+          #print('delta_con', delta_con)
+          #print('delta_util_c', delta_util_c)
         else:
           delta_x = newparams[0]
-          print('delta_x', delta_x)
+          #print('delta_x', delta_x)
           # BRENTQ OPTIMIZATION
           '''
            my_optimization.constraint_cost is the utility cost of constraining first period mitigation to zero
@@ -308,29 +312,29 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
            where delta_utility = util(constrained plan, consumption[today] + delta_con)-util(unconstrained plan, consumption[today])
           '''
           delta_con = brentq( my_optimization.find_bec, -.1, .99, args=( my_tree, my_damage_model, my_optimization, my_cost_model))
-          print('delta consumption to match unconstrained optimal plan', delta_con)
+          #print('delta consumption to match unconstrained optimal plan', delta_con)
         cost_per_ton = my_cost_model.consperton0
         if my_tree.analysis == 3:
-          print('Marginal cost of emissions reduction at x = ', base_x, 'is', marginal_cost)
+          #print('Marginal cost of emissions reduction at x = ', base_x, 'is', marginal_cost)
           '''
             my_cost_model.consperton0 is consumption in $ today per ton of emissions
             so the marginal benefit is the slope of the utility function wrt x / slope of the utility function wrt c * ($ consumption / ton of emissions)
           '''
-          print('Marginal benefit emissions reduction is', (delta_util_x / delta_util_c ) * delta_con * my_cost_model.consperton0 / delta_x)
+          #print('Marginal benefit emissions reduction is', (delta_util_x / delta_util_c ) * delta_con * my_cost_model.consperton0 / delta_x)
           base_x += increment
         else :
-          print('delta_consumption_billions', delta_con * my_cost_model.consperton0 * my_tree.bau_emit_level[0])
+          #print('delta_consumption_billions', delta_con * my_cost_model.consperton0 * my_tree.bau_emit_level[0])
           delta_emissions_gigatons =  delta_x * my_tree.bau_emit_level[0]
-          print('delta_emissions_gigatons', delta_emissions_gigatons)
+          #print('delta_emissions_gigatons', delta_emissions_gigatons)
           deadweight = delta_con * my_cost_model.consperton0 / delta_x
-          print('Deadweight $ loss of consumption per year per ton of mitigation of not pricing carbon in period 0', deadweight)
+          #print('Deadweight $ loss of consumption per year per ton of mitigation of not pricing carbon in period 0', deadweight)
     '''
       calculate the marginal utility at time 0 of state contingent increases in consumption at each node
     '''
-    print(' marginal utility at time 0 of state contingent increases in consumption at each node ')
+    #print(' marginal utility at time 0 of state contingent increases in consumption at each node ')
     delta_con = .01
     base_util = fm.utility_function( bestparams, my_tree, my_damage_model, my_cost_model )
-    print(' base utility ', base_util)
+    #print(' base utility ', base_util)
 
     for time_period in range(0, my_tree.utility_nperiods-1):
       is_tree_node = my_tree.decision_period[ time_period]
@@ -338,13 +342,13 @@ def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11
       tree_node = my_tree.decision_period_pointer[ tree_period ]
       if is_tree_node == 1:
         first_u_node = my_tree.utility_period_pointer[time_period]
-        for period_node in range(0, my_tree.utility_period_nodes[time_period]):
+        for period_node in tqdm(range(0, my_tree.utility_period_nodes[time_period])):
           my_tree.node_consumption_epsilon[first_u_node+period_node] = delta_con
           new_util = fm.utility_function( bestparams, my_tree, my_damage_model, my_cost_model )
           my_tree.node_consumption_epsilon[first_u_node+period_node] = 0.0
           marginal_utility = (base_util - new_util) / delta_con
           #r[tree_period] = {'year':2015+my_tree.utility_times[time_period]}
-          print(' period ', tree_period, ' year ', 2015+my_tree.utility_times[time_period], ' node ', tree_node+period_node, ' utility', new_util, ' marginal_utility ', marginal_utility  )
+          #print(' period ', tree_period, ' year ', 2015+my_tree.utility_times[time_period], ' node ', tree_node+period_node, ' utility', new_util, ' marginal_utility ', marginal_utility  )
           
     return cost_per_ton, delta_emissions_gigatons
     '''
