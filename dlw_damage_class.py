@@ -1,5 +1,7 @@
 import math
 import numpy as np
+import sys
+from tqdm import tqdm # For timer bar.
 #from celery import Celery # For running from web app
 #app = Celery('run_model',broker='amqp://', backend='amqp://')
 
@@ -661,11 +663,11 @@ class damage_model(object):
 
                     ''' loop over the Monte Carlo over times, in order to increase accuracy
                     '''
-                    for redraw in range(0,self.over):
+                    for redraw in tqdm(range(0,self.over)):
         
                         '''  draw random outcomes for temperature and economic impact per Pindyck paper
                         '''    
-                        print(' percent done so far ', (100. * redraw) / float(self.over))
+                        #print(' percent done so far ', (100. * redraw) / float(self.over))
                         if (self.temp_map == 0):
                             temperature = self.gammaArray(self.pindyck_temp_k[rb], self.pindyck_temp_theta[rb],self.draws)+self.pindyck_temp_displace[rb]
                         elif (self.temp_map == 1):
@@ -715,7 +717,7 @@ class damage_model(object):
       
                                 '''  now add the tipping points
                                 '''
-                            priod_length = self.my_tree.decision_times[1]
+                            period_length = self.my_tree.decision_times[1]
                             for p in np.arange(0,self.my_tree.nperiods):
                                 ave_prob_of_survival = 1. - (temp_at_h[p] / max( temp_at_h[p], self.peak_temp ) )**2
                                 if p>0 :
