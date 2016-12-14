@@ -14,7 +14,7 @@ import pandas as pd # For loading the scenario configs and outputting the result
 import psutil # For getting system info.
 import sys # For key system info.
 
-df_s = pd.read_excel("performance_scenarios_short.xlsx")
+df_s = pd.read_excel("performance_scenarios.xlsx")
 output_filename = "outputs/performance_results_%s.xlsx" % time.strftime("%Y-%m-%d-%H%M%S")
 
 if __name__ == '__main__':
@@ -22,11 +22,12 @@ if __name__ == '__main__':
     for index, row in df_s.iterrows():
         print("Running performance scenario:", index)
         ts = time.time() # Scenario start time.
-        dlw_run.run_model(tp1=row.tp1, tree_analysis=row.tree_analysis)
+        dlw_run.run_model(tp1=row.tp1, tree_analysis=row.tree_analysis, draws=row.draws)
         te = time.time() - ts # Scenario end time.
         d = {} # Temporary dictionary for storing the run time results.
         d['tp1'] = row.tp1
         d['tree_analysis'] = row.tree_analysis
+        d['draws'] = row.draws
         d['os'] = sys.platform
         d['python_version'] = sys.version
         d['run_time'] = te
