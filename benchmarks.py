@@ -14,7 +14,7 @@ import pandas as pd # For loading the scenario configs and outputting the result
 import psutil # For getting system info.
 import sys # For key system info.
 
-df_s = pd.read_excel("performance_scenarios.xlsx")
+df_s = pd.read_excel("benchmark_scenarios.xlsx")
 output_filename = "outputs/performance_results_%s.xlsx" % time.strftime("%Y-%m-%d-%H%M%S")
 
 if __name__ == '__main__':
