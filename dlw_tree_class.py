@@ -1,7 +1,10 @@
 import numpy as np
+from dlw_log import LogUtil # For logging. Currently DEBUG use only.
+
+log = LogUtil() # Instanciate the logger utility.
 
 class tree_model():
-    print("DEBUG: inside tree_model classs--------------------------")
+    log.log_it("Inside tree_model classs--------------------------")
     ''' This file contains code used to create a tree object
         this tree is used in the utility optimization of the daniel,litterman,wagner climate risk model
     
@@ -76,14 +79,14 @@ class tree_model():
               delta consumption, SDF's and marginal utilities, sub-interval detail, GHG levels, SCC decomposition
               SCC decomposition intermediate calculations]
         '''
-        print("DEBUG: Inside tree_class.py")
-        print("tp1:",tp1)
-        print("analysis optimization:",analysis)
-        print("final_states:",final_states)
+        log.log_it("Inside tree_class.py")
+        log.log_it("tp1: %i" % tp1)
+        log.log_it("analysis optimization: %f" % analysis)
+        log.log_it("final_states: %f" % final_states)
         self.analysis = analysis
-        print("analysis =", analysis)
+        log.log_it("analysis = %f" % analysis)
         decision_times[1] = tp1
-        print("time_period_one", tp1)
+        log.log_it("time_period_one %i " % tp1)
         self.final_states = final_states
         self.nperiods = nperiods
         self.peak_temp_interval = peak_temp_interval
@@ -112,7 +115,7 @@ class tree_model():
         self.total_time = self.decision_times[nperiods]
 
         self.utility_nperiods = int(self.total_time / self.sub_interval_length)+1
-        print('utility_nperiods', self.utility_nperiods)
+        log.log_it('utility_nperiods: %i' % self.utility_nperiods)
 
         for p in range(1, self.nperiods):
             self.decision_nodes.append( 2**p )
@@ -184,9 +187,12 @@ class tree_model():
         self.bau_emit_level = [ 52.0, 70.0, 81.4]
         self.bau_emissions_setup()
 
-        print("initializing tree", "\n number of periods =", self.nperiods, "\n number of nodes in tree =", x_dim,"\n")
-        print(" probability scale paramter =", self.prob_scale)
-        print(" probabilities of final states \n ", self.probs, "\n")
+        log.log_it("initializing tree")
+        log.log_it("  number of periods = %i" % self.nperiods)
+        log.log_it("  number of nodes in tree = %i" % x_dim)
+        log.log_it("  probability scale paramter = %f" % self.prob_scale)
+        log.log_it("  probabilities of final states: %s" % self.probs)
+        
     def bau_of_t(self, time):
         '''     return the bau emissions at any time t   '''
         if time < self.bau_emit_time[1] :
@@ -254,7 +260,7 @@ class tree_model():
 
 
     def create_node_mapping(self):
-        print("DEBUG: inside create_node_mapping--------------------------")
+        log.log_it("DEBUG: inside create_node_mapping--------------------------")
         '''  sets up a tree structure
                create node_mapping -- nodes are points in the tree structure
 

@@ -1,4 +1,7 @@
 import numpy as np
+from dlw_log import LogUtil # For logging. Currently DEBUG use only.
+
+log = LogUtil() # Instanciate the logger utility.
 
 class cost_model(object):
     '''Includes functions to evaluate the cost curve for a climate model
@@ -59,7 +62,7 @@ class cost_model(object):
         '''
         self.consperton0 = consat0 / tree.bau_emit_level[0]
         self.cost_gradient = np.zeros([self.tree.x_dim, self.tree.x_dim])
-        print('Exogenous technological change =', teconst,'Endogenous technological change =', tescale)
+        log.log_it('Exogenous technological change = %f  Endogenous technological change = %f' % (teconst, tescale))
 
     def cost_by_state( self, mitigation, average_mitigation, node):
         '''Calculates the mitigation cost by state

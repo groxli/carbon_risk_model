@@ -2,8 +2,11 @@ import math
 import numpy as np
 import sys
 from tqdm import tqdm # For timer bar.
+from dlw_log import LogUtil # For logging. Currently DEBUG use only.
 #from celery import Celery # For running from web app
 #app = Celery('run_model',broker='amqp://', backend='amqp://')
+
+log = LogUtil() # Instanciate the logger utility.
 
 class damage_model(object):
     '''Includes functions to evaluate the damages for the dlw climate model
@@ -79,9 +82,9 @@ class damage_model(object):
             time paramter from Pindyck which indicates the time it takes for temp to get half way to its max value for a given level of ghg
         
         '''
-        print("DEBUG: Inside damage_class")
-        print("peak_temp:",peak_temp)
-        print("disaster_tail:",disaster_tail)
+        log.log_it("Inside damage_class")
+        log.log_it("peak_temp: %i" % peak_temp)
+        log.log_it("disaster_tail: %i" % disaster_tail)
         self.my_tree = my_tree
         self.peak_temp = peak_temp
         self.disaster_tail = disaster_tail
@@ -118,10 +121,13 @@ class damage_model(object):
         self.rb_theta = [ 2.304627, 3.333599, 2.356967 ]
         self.damage_function_interpolation_coefficients = np.zeros([self.my_tree.final_states,self.my_tree.nperiods,self.dnum-1,3])
         
-        print("Initializing Damage Function \n", " Peak temp parameter =", self.peak_temp, " Disaster tail parameter =", self.disaster_tail)
-        print(" Tipping points flag =", self.tip_on, "\n Temperature map =", self.temp_map, "\n BAU GHG reaches =", self.bau_ghg)
-        print(" Pindyck damage parameters(k,theta,displacement) =", self.pindyck_impact_k, self.pindyck_impact_theta, self.pindyck_impact_displace)
-        print(" Monte Carlo draws =", self.draws * self.over, "\n")
+        log.log_it("Initializing Damage Function")
+        log.log_it("Peak temp parameter = %f Disaster tail parameter = %f" % (self.peak_temp, self.disaster_tail))
+        log.log_it(" Tipping points flag = %f" % self.tip_on)
+        log.log_it("Temperature map = %f" % self.temp_map)
+        log.log_it("BAU GHG reaches = %f" % self.bau_ghg)
+        log.log_it(" Pindyck damage parameters(k,theta,displacement) = %f %f %f" % (self.pindyck_impact_k, self.pindyck_impact_theta, self.pindyck_impact_displace))
+        log.log_it(" Monte Carlo draws = %i" % (self.draws * self.over))
         
     def damage_function_interpolation(self):
         '''
@@ -585,34 +591,34 @@ class damage_model(object):
 
         '''
     
-        print('\nGlobal tree structure parameters:')
-        print(' Periods:', self.my_tree.nperiods, 'Nodes in tree:', self.my_tree.x_dim, 'Final_states:', self.my_tree.final_states)
-        print(' Horizons:', self.my_tree.decision_times)
-        print(' Final state probabilities', self.my_tree.probs)
+        log.log_it('Global tree structure parameters:')
+        log.log_it(' Periods: %i Nodes in tree: %i Final_states: %i' % (self.my_tree.nperiods, self.my_tree.x_dim, self.my_tree.final_states))
+        log.log_it(' Horizons: %s' % str(self.my_tree.decision_times))
+        log.log_it(' Final state probabilities: %s' % str(self.my_tree.probs))
 
-        print('\nGlobal economic parameters:')
-        print(' Economic growth', self.my_tree.growth)
-        print(' Elasticity of Intertemporal Substitution', self.my_tree.eis, 'Risk Aversion', self.my_tree.ra)
+        log.log_it('Global economic parameters:')
+        log.log_it(' Economic growth: %f' % self.my_tree.growth)
+        log.log_it(' Elasticity of Intertemporal Substitution: %f  Risk Aversion: %f' % (self.my_tree.eis, self.my_tree.ra))
 
-        print('\nDamage parameters:')
+        log.log_it('Damage parameters:')
 
         if (self.temp_map == 0):
-            print(' Use the Pindyck displaced gamma distribution mapping GHG into temperature')
+            log.log_it('  Use the Pindyck displaced gamma distribution mapping GHG into temperature')
         elif (self.temp_map == 1):
-            print(' Use the Wagner-Weitzman log-normal distribution mapping GHG into temperature')
+            log.log_it('  Use the Wagner-Weitzman log-normal distribution mapping GHG into temperature')
         else:
-            print(' Use the Roe-Baker distribution mapping GHG into temperature')
+            log.log_it(' Use the Roe-Baker distribution mapping GHG into temperature')
 
         if (self.tip_on == 0):
-            print(' tipping points and disaster tail turned OFF')
+            log.log_it(' tipping points and disaster tail turned OFF')
         else:
-            print(' tipping points and disaster tail turned ON')
-            print(' Peak_temp', self.peak_temp, 'Disaster_tail', self.disaster_tail)
+            log.log_it(' tipping points and disaster tail turned ON')
+            log.log_it(' Peak_temp: %f Disaster_tail %f' % (self.peak_temp, self.disaster_tail))
 
-        print('\nMonte Carlo parameters:')
-        print(' Total number of MC simulations', self.monte_loops)
-        print(' Creating damage coefficients using', self.draws * self.over * self.monte_loops, 'simulations')
-        print(' Damage coefficients are written to the file: dlw_damage_matrix')
+        log.log_it('Monte Carlo parameters:')
+        log.log_it('  Total number of MC simulations: %i' % self.monte_loops)
+        log.log_it('  Creating damage coefficients using %i simulations' % (self.draws * self.over * self.monte_loops))
+        log.log_it('  Damage coefficients are written to the file: dlw_damage_matrix')
 
         f = open('\\Users\\Bob Litterman\\Dropbox\\EZ Climate calibration paper\\dlw code\\dlw_damage_matrix', 'w')
         f.write(str('\n'))
@@ -658,7 +664,7 @@ class damage_model(object):
                     '''
 
                 for lp in range(0,self.loops):
-                    print('loop ', lp, 'simul with GHG level =', self.ww_ghg[rb])
+                    log.log_it('loop: %i  simul with GHG level = %f' % (lp, self.ww_ghg[rb]))
                     d = np.zeros([self.my_tree.final_states,self.my_tree.nperiods])
 
                     ''' loop over the Monte Carlo over times, in order to increase accuracy
@@ -780,7 +786,7 @@ class damage_model(object):
         '''
         
         self.bau_emissions = self.bau_ghg - 400.
-        print('business-as-usual increase in CO2 ppm', self.bau_emissions)
+        log.log_it('business-as-usual increase in CO2 ppm: %f' % self.bau_emissions)
         ''' For now we hardwire 3 simulations at ghg levels of 450, 650, and 1000 to calculate damages
         '''
         
@@ -791,64 +797,64 @@ class damage_model(object):
  
         for simul in range(0, self.dnum):
           self.emit_percentage[simul] = 1 - float(self.ww_ghg[simul]-400.0)/self.bau_emissions
-        print('simulations emissions percentages', self.emit_percentage)
+        log.log_it('simulations emissions percentages: %s' % str(self.emit_percentage))
 
         if( self.force_simul == 1 ):
             self.damage_simulation()
             self.force_simul = 0 
         else:
-            print("checking match between monte carlo file parameters and current run parameters")
+            log.log_it("Checking match between monte carlo file parameters and current run parameters")
 
         f = open('\\Users\\Bob Litterman\\Dropbox\\EZ Climate calibration paper\\dlw code\\dlw_damage_matrix', 'r')
         line = f.readline()
         nperiods, x_dim, final_states = [int(x) for x in f.readline().split()]
         if (nperiods == self.my_tree.nperiods) :
-            print("monte file nperiods =", nperiods)
+            log.log_it("monte file nperiods = %i" % nperiods)
         else:
             self.force_simul = 1
         if (x_dim == self.my_tree.x_dim) :
-            print("monte file x_dim =", x_dim)
+            log.log_it("monte file x_dim = %i" % x_dim)
         else:
             self.force_simul = 1
         if (final_states == self.my_tree.final_states) :
-            print("monte file final_states =", final_states)
+            log.log_it("monte file final_states = %i" % final_states)
         else:
             self.force_simul = 1
         monte_loops, draws, over, tip_on = [int(x) for x in f.readline().split()]
         if (monte_loops == self.monte_loops) :
-            print("monte file monte_loops =", monte_loops)
+            log.log_it("monte file monte_loops = %i" % monte_loops)
         else:
             self.force_simul = 1
         if (draws == self.draws) :
-            print("monte file draws =", draws)
+            log.log_it("monte file draws = %i" % draws)
         else:
             self.force_simul = 1
         if (over == self.over) :
-            print("monte file over =", over)
+            log.log_it("monte file over = %i" % over)
         else:
             self.force_simul = 1
         if (tip_on == self.tip_on) :
-            print("monte file tip_on =", tip_on)
+            log.log_it("monte file tip_on = %i" % tip_on)
         else:
             self.force_simul = 1
         disaster_tail, peak_temp, temp_map, growth = [float(x) for x in f.readline().split()]
         if (disaster_tail == self.disaster_tail) :
-            print("monte file disaster_tail =", disaster_tail)
+            log.log_it("monte file disaster_tail = %f" % disaster_tail)
         else:
             self.force_simul = 1
         if (peak_temp == self.peak_temp) :
-            print("monte file peak_temp =", peak_temp)
+            log.log_it("monte file peak_temp = %f" % peak_temp)
         else:
             self.force_simul = 1
         if (temp_map == self.temp_map) :
-            print("monte file temp_map =", temp_map)
+            log.log_it("monte file temp_map = %f" % temp_map)
         else:
             self.force_simul = 1
         if (growth == self.my_tree.growth) :
-            print("monte file growth =", growth)
+            log.log_it("monte file growth = %f" % growth)
         else:
             self.force_simul = 1
-        print('check', self.force_simul)
+        log.log_it('check: %if' % self.force_simul)
         probs = [float(x) for x in f.readline().split()]
         for i in range(0, final_states):
             if abs(probs[i]-self.my_tree.probs[i]) > .0001 :
@@ -858,7 +864,7 @@ class damage_model(object):
             if horizons[i] != self.my_tree.decision_times[i] :
                 self.force_simul = 1
         if self.force_simul == 1 :
-            print("PROGRAM HALT: parmameter on Monte Carlo file does not match current run -- set force_simul = 1 to create new monte carlo file")
+            log.log_it("PROGRAM HALT: parmameter on Monte Carlo file does not match current run -- set force_simul = 1 to create new monte carlo file")
             sys.exit(0)
 
         if self.my_tree.nperiods <= 5 :

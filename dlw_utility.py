@@ -4,6 +4,9 @@
 '''
 import math
 import numpy as np
+#from dlw_log import LogUtil # For logging. Currently DEBUG use only.
+
+#log = LogUtil() # Instanciate the logger utility.
 
 def utility_function(x,*var_args):
     '''

@@ -3,6 +3,9 @@ import numpy as np
 import random
 import dlw_utility as fm
 from tqdm import tqdm # For timer bar.
+from dlw_log import LogUtil # For logging. Currently DEBUG use only.
+
+log = LogUtil() # Instanciate the logger utility.
 
 class optimize_plan(object):
     '''Includes functions and parameters to control the optimization of the climate model
@@ -44,7 +47,7 @@ class optimize_plan(object):
                 six values per row
         '''
         guess = np.zeros(self.my_tree.x_dim)+.5
-        print("getting mitigation guess from the file 'params.txt'")
+        log.log_it("getting mitigation guess from the file 'params.txt'")
         f = open(self.output_path+'/bestparams.txt', 'r')
         rows = int(self.my_tree.x_dim / 6)-1
         rest = rows*6
@@ -61,10 +64,10 @@ class optimize_plan(object):
         '''
         guess = np.zeros(self.my_tree.x_dim)+.5
         if self.alt_input == 0 :
-            print("getting mitigation guess from the file 'bestparams6.txt'")
+            log.log_it("getting mitigation guess from the file 'bestparams6.txt'")
             f = open(self.output_path+'/bestparams6.txt', 'r')
         else :
-            print("getting mitigation guess from the file ", self.filename)
+            log.log_it("getting mitigation guess from the file ", self.filename)
             f = open(self.filename, 'r')
         rows = int(self.my_tree.x_dim / 6)-1
         rest = rows*6
@@ -82,7 +85,7 @@ class optimize_plan(object):
         '''    write optimal mitigation plan to a file
                 six values per row
         '''
-        print("putting optimal mitigation plan on the file 'bestparams.txt'")
+        log.log_it("putting optimal mitigation plan on the file 'bestparams.txt'")
         f = open(self.output_path+'bestparams.txt', 'w')
         rows = int(self.my_tree.x_dim / 6)-1
         rest = rows*6
@@ -96,7 +99,7 @@ class optimize_plan(object):
         '''    write optimal mitigation plan to a file
                 six values per row
         '''
-        print("putting optimal mitigation plan on the file 'bestparams6.txt'")
+        log.log_it("putting optimal mitigation plan on the file 'bestparams6.txt'")
         f = open(self.output_path+'/bestparams6.txt', 'w')
         rows = int(self.my_tree.x_dim / 6)-1
         rest = rows*6
@@ -175,10 +178,10 @@ class optimize_plan(object):
 
         if my_tree.analysis >= 1 :
             if my_tree.print_options[2] == 1:
-                print('Print_Option[2] Social_Cost_of_Carbon_=', price)
+                log.log_it('Print_Option[2] Social_Cost_of_Carbon_=%f' % price)
 
         if my_tree.print_options[3] == 1:
-            print("dlw_optimize: my_tree.print_options[3] == 1\n")
+            log.log_it("dlw_optimize: my_tree.print_options[3] == 1")
             emissions_to_bau = my_tree.emissions_to_ghg[my_tree.nperiods-1] / my_tree.emissions_per_period[my_tree.nperiods-1]
             bau_path = 400
             for p in tqdm(range(0, my_tree.nperiods)):
@@ -222,12 +225,13 @@ class optimize_plan(object):
         years_to_maturity = my_tree.utility_times[np]
 
         if my_tree.print_options[4] == 1:
-            print("dlw_optimize: my_tree.print_options[4] == 1")
-            print('Print_Option[4] Zero_coupon_bond_maturing_at_time', 2015+5*np, 'has_price_=', res, 'and_yield_=', 100. * (1./(res**(1./years_to_maturity))-1.))
+            log.log_it("dlw_optimize: my_tree.print_options[4] == 1")
+            log.log_it('Print_Option[4] Zero_coupon_bond_maturing_at_time %i has_price_=%f and_yield_=%' % ((2015+5*np), res, 100. * (1./(res**(1./years_to_maturity))-1.)))
                 
         '''
             output for the decomposition of SCC into expected damage and risk premium
         '''
+        # TODO: Determine if/how 'utility' and 'base_grad' should be used.
         utility = fm.utility_function( best_mitigation_plan, self.my_tree, my_damage_model, my_cost_model )
         base_grad = fm.analytic_utility_gradient(best_mitigation_plan, self.my_tree, my_damage_model, my_cost_model )
         d_cost_sum = 0.0
@@ -238,16 +242,16 @@ class optimize_plan(object):
         if my_tree.analysis == 2 :
             consumption_cost = my_tree.d_consumption_by_state[0]
             if my_tree.print_options[5] == 1:
-                print('Print_Option[5] Period_0_delta_consumption', consumption_cost)
+                log.log_it('Print_Option[5] Period_0_delta_consumption: %f' % consumption_cost)
             if my_tree.print_options[6] == 1:
-                print('Print_Option[6] Period_0_marginal_utility_wrt_c(0)', my_tree.marginal_utility_by_state[0][0],'Period_0_marginal_utility_wrt_c(node1)_up_node', my_tree.marginal_utility_by_state[0][1],'Period_0_marginal_utility_wrt_c(node2)_down_node',my_tree.marginal_utility_by_state[0][2])
+                log.log_it('Print_Option[6] Period_0_marginal_utility_wrt_c(0): %i  Period_0_marginal_utility_wrt_c(node1)_up_node: %i  Period_0_marginal_utility_wrt_c(node2)_down_node: %i' % (my_tree.marginal_utility_by_state[0][0], my_tree.marginal_utility_by_state[0][1],my_tree.marginal_utility_by_state[0][2]))
 
             '''
                 in this loop calculate and print the expected damage and the risk premium term at each point in time
             '''
             my_tree.sdf_in_tree[0] = 1.0
 
-            print("dlw_optimize: my_tree.analysis == 2")
+            log.log_it("dlw_optimize: my_tree.analysis == 2")
             for time_period in tqdm(range(1, self.my_tree.utility_nperiods)):
                 '''  for a given time_period in the utility_tree, tree_node points to the first node in the period of the last decision in the decision tree'''
                 tree_node = my_tree.decision_period_pointer[ min( my_tree.nperiods-1, my_tree.utility_decision_period[time_period-1]+1) ]
