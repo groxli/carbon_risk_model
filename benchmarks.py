@@ -13,14 +13,17 @@ import time # For measuring the run time.
 import pandas as pd # For loading the scenario configs and outputting the results.
 import psutil # For getting system info.
 import sys # For key system info.
+from dlw_log import LogUtil # For logging. Currently DEBUG use only.
 
-df_s = pd.read_excel("benchmark_scenarios.xlsx")
+log = LogUtil()
+
+df_s = pd.read_excel("benchmark_scenarios.xlsx", sheetname="scenarios")
 output_filename = "outputs/performance_results_%s.xlsx" % time.strftime("%Y-%m-%d-%H%M%S")
 
 if __name__ == '__main__':
     r = [] # Array for storing the run time results.
     for index, row in df_s.iterrows():
-        print("Running performance scenario:", index)
+        log.log_it("Running performance scenario: %s" % index)
         ts = time.time() # Scenario start time.
         dlw_run.run_model(tp1=row.tp1, tree_analysis=row.tree_analysis, draws=row.draws)
         te = time.time() - ts # Scenario end time.
@@ -37,5 +40,9 @@ if __name__ == '__main__':
         d['mem_free'] = psutil.virtual_memory().free / 1024 / 1024
         d['mem_inactive'] = psutil.virtual_memory().inactive / 1024 / 1024
         r.append(d)
+        log.log_it(d)
+        
     df_r = pd.DataFrame(r) # Create a results Data Frame.
     df_r.to_excel(output_filename)
+    
+log.log_it("All simulations completed.")
