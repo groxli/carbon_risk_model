@@ -226,7 +226,7 @@ class optimize_plan(object):
 
         if my_tree.print_options[4] == 1:
             log.log_it("dlw_optimize: my_tree.print_options[4] == 1")
-            log.log_it('Print_Option[4] Zero_coupon_bond_maturing_at_time %i has_price_=%f and_yield_=%' % ((2015+5*np), res, 100. * (1./(res**(1./years_to_maturity))-1.)))
+            log.log_it('Print_Option[4] Zero_coupon_bond_maturing_at_time %i has_price_=%f and_yield_=%f' % ((2015+5*np), res, 100. * (1./(res**(1./years_to_maturity))-1.)))
                 
         '''
             output for the decomposition of SCC into expected damage and risk premium
