@@ -36,7 +36,7 @@ app = Celery('run_model', broker='amqp://', backend='amqp://')
 '''
 
 @app.task # Celery decorator for making the run_model() distributed.
-def run_model(tp1=10, tree_analysis=4, tree_final_states=32, damage_peak_temp=11.0, damage_disaster_tail=18.0, draws=50):
+def run_model(tp1=30, tree_analysis=4, tree_final_states=32, damage_peak_temp=11.0, damage_disaster_tail=18.0, draws=50):
     print('These arguments set in batch mode')
     #print('growth rate = ', sys.argv[1]
     # Original 1st parm: print('period_1_years =', sys.argv[1])
